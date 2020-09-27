@@ -7,9 +7,10 @@ import seaborn as sns
 
 POLY_DEGREE = 10
 THETA = torch.zeros(POLY_DEGREE+1,1)
-DATASIZE = 200
 TEST_SIZE = 1000
 SIGMA = 1
+TRAINING_SIZE = [2,5,10,20,50,100,200]
+TRIALS = 50
 
 def getData(data_size,sigma):
     x = torch.empty(data_size, ).uniform_(0, 1).type(torch.FloatTensor)
@@ -86,6 +87,7 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
     theta_total = torch.ones(theta_degree,1)
 
     while k < trials:
+        print('Trial: ', k+1)
         fit_data = fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,regularization,plot)
         fit_theta = fit_data[0]
         training_lost = fit_data[1]
@@ -93,8 +95,7 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
         Ein_total += training_lost
         Eout_total += test_lost
         theta_total += fit_theta
-        k+=1
-        print('Trial: ', k)
+        k += 1
 
     Ein_avg = Ein_total/trials
     Eout_avg = Eout_total/trials
@@ -114,32 +115,50 @@ def plotmse(times, errors):
 
 
 # training data size
-errors_in = np.array([])
-errors_out = np.array([])
-errors_bias = np.array([])
-epoch_time = np.array([])
 
 
-for n in [2,5,10,20,50,100,200]:
-    experiment_N = experiment(0.01, 10000, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, 50, False, False)
-    Ein_N = experiment_N[0]
-    Eout_N = experiment_N[1]
-    Ebias_N = experiment_N[2]
+def experiment_size(N):
+    errors_in = np.array([])
+    errors_out = np.array([])
+    errors_bias = np.array([])
+    errors_in_reg = np.array([])
+    errors_out_reg = np.array([])
+    errors_bias_reg = np.array([])
+    for n in N:
+        print("n: ", n)
+        experiment_N_reg = experiment(0.01, 200, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, TRIALS, True, False)
+        experiment_N = experiment(0.01, 200, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, TRIALS, False, False)
 
-    errors_in = np.append(errors_in, Ein_N)
-    errors_out = np.append(errors_out, Eout_N)
-    errors_bias = np.append(errors_bias, Ebias_N)
-    epoch_time = np.append(epoch_time, n)
-    print("n: ", n)
+        Ein_N_reg = experiment_N_reg[0]
+        Eout_N_reg = experiment_N_reg[1]
+        Ebias_N_reg = experiment_N_reg[2]
 
-fig, ax = plt.subplots()
-sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_in, color='blue', label='E_in', ax=ax)
-sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_out, color='red', label='E_out', ax=ax)
-sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_bias, color='green', label='E_bias', ax=ax)
-plt.xlabel('training sample size')
-plt.ylabel('MSE')
-plt.title('d = 10, sigma = 1, without regularization')
+        Ein_N = experiment_N[0]
+        Eout_N = experiment_N[1]
+        Ebias_N = experiment_N[2]
 
-plt.savefig("Sample size no_reg")
+        errors_in_reg = np.append(errors_in_reg, Ein_N_reg)
+        errors_out_reg = np.append(errors_out_reg, Eout_N_reg)
+        errors_bias_reg= np.append(errors_bias_reg, Ebias_N_reg)
+
+        errors_in = np.append(errors_in, Ein_N)
+        errors_out = np.append(errors_out, Eout_N)
+        errors_bias= np.append(errors_bias, Ebias_N)
+
+    fig, ax = plt.subplots()
+    sns.lineplot(x=N, y=errors_in_reg, color='blue', label='E_in with regularization', ax=ax)
+    sns.lineplot(x=N, y=errors_out_reg, color='red', label='E_out with regularization', ax=ax)
+    sns.lineplot(x=N, y=errors_bias_reg, color='green', label='E_bias with regularization', ax=ax)
+
+    sns.lineplot(x=N, y=errors_in, color='blue', label='E_in', ax=ax, linestyle='dashed')
+    sns.lineplot(x=N, y=errors_out, color='red', label='E_out', ax=ax, linestyle='dashed')
+    sns.lineplot(x=N, y=errors_bias, color='green', label='E_bias', ax=ax, linestyle='dashed')
+
+    plt.xlabel('training sample size')
+    plt.ylabel('MSE')
+    plt.title('d = 10, sigma = 1')
+
+    plt.savefig("Sample size with "+str(TRIALS)+" trials")
 
 
+experiment_size(TRAINING_SIZE)
