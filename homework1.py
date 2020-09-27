@@ -3,12 +3,13 @@ import tensorflow as tf
 import numpy as np
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 POLY_DEGREE = 10
 THETA = torch.zeros(POLY_DEGREE+1,1)
 DATASIZE = 200
 TEST_SIZE = 1000
-SIGMA = 0.1
+SIGMA = 1
 
 def getData(data_size,sigma):
     x = torch.empty(data_size, ).uniform_(0, 1).type(torch.FloatTensor)
@@ -77,14 +78,14 @@ def fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing
     E_out = test_lost
     return current_theta, E_in, E_out
 
-def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,trails,regularization,plot):
+def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,trials,regularization,plot):
     k = 0
     Ein_total = 0
     Eout_total = 0
     theta_degree = poly_degree+1
     theta_total = torch.ones(theta_degree,1)
 
-    while k < trails:
+    while k < trials:
         fit_data = fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,regularization,plot)
         fit_theta = fit_data[0]
         training_lost = fit_data[1]
@@ -94,16 +95,16 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
         theta_total += fit_theta
         k+=1
 
-    Ein_avg = Ein_total/trails
-    Eout_avg = Eout_total/trails
-    theta_avg = theta_total/trails
+    Ein_avg = Ein_total/trials
+    Eout_avg = Eout_total/trials
+    theta_avg = theta_total/trials
     testing_data = make_data_features(testing_size,sigma,poly_degree)
     x_testing = testing_data[0]
     y_testing = testing_data[1]
     y_test_predict = hypothesis(x_testing, theta_avg)
     test_lost = getMSE(y_test_predict, y_testing, testing_size)
 
-    return Ein_avg, Eout_avg,theta_avg, test_lost
+    return Ein_avg, Eout_avg, test_lost, theta_avg
 
 
 def plotmse(times, errors):
@@ -111,5 +112,33 @@ def plotmse(times, errors):
     plt.show()
 
 
-experiment_test = experiment(0.01,100,THETA,POLY_DEGREE,0.25,DATASIZE,TEST_SIZE,5,True,False)
-print(experiment_test)
+# training data size
+errors_in = np.array([])
+errors_out = np.array([])
+errors_bias = np.array([])
+epoch_time = np.array([])
+
+
+
+for n in [2,5,10,20,50,100,200]:
+    experiment_N = experiment(0.01, 10000, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, 50, True, False)
+    Ein_N = experiment_N[0]
+    Eout_N = experiment_N[1]
+    Ebias_N = experiment_N[2]
+
+    errors_in = np.append(errors_in, Ein_N)
+    errors_out = np.append(errors_out, Eout_N)
+    errors_bias = np.append(errors_bias, Ebias_N)
+    epoch_time = np.append(epoch_time, n)
+
+fig, ax = plt.subplots()
+sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_in, color='blue', label='E_in', ax=ax)
+sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_out, color='red', label='E_out', ax=ax)
+sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_bias, color='green', label='E_bias', ax=ax)
+plt.xlabel('training sample size')
+plt.ylabel('MSE')
+plt.title('d = 10, sigma = 1, with regularization')
+
+plt.savefig("Sample size")
+
+
