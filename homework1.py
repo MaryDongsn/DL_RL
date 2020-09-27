@@ -94,6 +94,7 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
         Eout_total += test_lost
         theta_total += fit_theta
         k+=1
+        print('Trial: ', k)
 
     Ein_avg = Ein_total/trials
     Eout_avg = Eout_total/trials
@@ -119,9 +120,8 @@ errors_bias = np.array([])
 epoch_time = np.array([])
 
 
-
 for n in [2,5,10,20,50,100,200]:
-    experiment_N = experiment(0.01, 10000, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, 50, True, False)
+    experiment_N = experiment(0.01, 10000, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, 50, False, False)
     Ein_N = experiment_N[0]
     Eout_N = experiment_N[1]
     Ebias_N = experiment_N[2]
@@ -130,6 +130,7 @@ for n in [2,5,10,20,50,100,200]:
     errors_out = np.append(errors_out, Eout_N)
     errors_bias = np.append(errors_bias, Ebias_N)
     epoch_time = np.append(epoch_time, n)
+    print("n: ", n)
 
 fig, ax = plt.subplots()
 sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_in, color='blue', label='E_in', ax=ax)
@@ -137,8 +138,8 @@ sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_out, color='red', label='E_out',
 sns.lineplot(x=[2,5,10,20,50,100,200], y=errors_bias, color='green', label='E_bias', ax=ax)
 plt.xlabel('training sample size')
 plt.ylabel('MSE')
-plt.title('d = 10, sigma = 1, with regularization')
+plt.title('d = 10, sigma = 1, without regularization')
 
-plt.savefig("Sample size")
+plt.savefig("Sample size no_reg")
 
 
