@@ -2,6 +2,7 @@ import torch
 import tensorflow as tf
 import numpy as np
 from torch.autograd import Variable
+import matplotlib.pyplot as plt
 
 POLY_DEGREE = 10
 THETA = torch.zeros(POLY_DEGREE+1,1)
@@ -41,9 +42,14 @@ def GradientDescent(x,y, y_predict,data_size,theta,learning_rate, regularization
     return learned_theta
 
 
-def fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,regularization):
+def fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,regularization,plot):
     current_theta = theta
     k = 0
+    errors = []
+    epoch_time = []
+    errors = np.array(errors)
+    epoch_time = np.array(epoch_time)
+
     training_data = make_data_features(training_size,sigma,poly_degree)
     x_training = training_data[0]
     y_training = training_data[1]
@@ -59,15 +65,19 @@ def fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing
         current_theta = GradientDescent(x_training,y_training,y_predict,training_size,current_theta,learning_rate,regularization)
         test_lost = getMSE(y_test_predict, y_testing,testing_size)
         k += 1
+        if plot:
+            errors = np.append(errors,test_lost)
+            epoch_time = np.append(epoch_time,k)
+            print("+++++error array", errors)
+            print("&&&&&&&&&&&etime", epoch_time)
+    if plot:
+        plotmse(epoch_time,errors)
+
     E_in = training_lost
     E_out = test_lost
     return current_theta, E_in, E_out
 
-
-print(fitData(0.01,1000,THETA,POLY_DEGREE,0.5,DATASIZE,TEST_SIZE,regularization=True))
-
-
-def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,trails,regularization):
+def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,trails,regularization,plot):
     k = 0
     Ein_total = 0
     Eout_total = 0
@@ -75,7 +85,7 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
     theta_total = torch.ones(theta_degree,1)
 
     while k < trails:
-        fit_data = fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,regularization)
+        fit_data = fitData(sigma, epoch, theta,poly_degree, learning_rate,training_size,testing_size,regularization,plot)
         fit_theta = fit_data[0]
         training_lost = fit_data[1]
         test_lost = fit_data[2]
@@ -83,6 +93,7 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
         Eout_total += test_lost
         theta_total += fit_theta
         k+=1
+
     Ein_avg = Ein_total/trails
     Eout_avg = Eout_total/trails
     theta_avg = theta_total/trails
@@ -91,8 +102,14 @@ def experiment(sigma, epoch, theta,poly_degree, learning_rate,training_size,test
     y_testing = testing_data[1]
     y_test_predict = hypothesis(x_testing, theta_avg)
     test_lost = getMSE(y_test_predict, y_testing, testing_size)
+
     return Ein_avg, Eout_avg,theta_avg, test_lost
 
 
-experiment_test = experiment(0.01,10000,THETA,POLY_DEGREE,0.25,DATASIZE,TEST_SIZE,50,True)
+def plotmse(times, errors):
+    plt.plot(times, errors)
+    plt.show()
+
+
+experiment_test = experiment(0.01,100,THETA,POLY_DEGREE,0.25,DATASIZE,TEST_SIZE,5,True,False)
 print(experiment_test)
