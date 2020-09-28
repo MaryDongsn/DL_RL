@@ -130,14 +130,14 @@ def experiment_all(N, Sigma_list, degree_list):
     for n in N:
         for sigma in Sigma_list:
             for degree in degree_list:
-
+                print("n: ", n, "sigma: ", sigma, "poly_degree: ", degree)
                 theta = torch.zeros(degree + 1, 1)
-                experiment_all_reg = experiment(sigma, 2000, theta, degree, LEARNING_RATE, n, TEST_SIZE, TRIALS, True,
+                experiment_all_reg = experiment(sigma, 20, theta, degree, LEARNING_RATE, n, TEST_SIZE, TRIALS, True,
                                               False)
-                np.save(experiment_all_reg)
-                experiment_all_test = experiment(sigma, 2000, theta, degree, LEARNING_RATE, n, TEST_SIZE, TRIALS, False,
+                print('with reg: ', experiment_all_reg)
+                experiment_all_test = experiment(sigma, 20, theta, degree, LEARNING_RATE, n, TEST_SIZE, TRIALS, False,
                                           False)
-                np.save(experiment_all_test)
+                print('without reg: ',experiment_all_test)
 
 
 
@@ -185,6 +185,7 @@ def experiment_size(N):
 
     plt.savefig("Sample size 0.01 sigma experiment with "+str(TRIALS)+" trials.png")
 
+
 def experiment_sigma(Sigma_list):
     errors_in = np.array([])
     errors_out = np.array([])
@@ -227,7 +228,6 @@ def experiment_sigma(Sigma_list):
     plt.title('d = 10, N = 200')
 
     plt.savefig("Sigma experiment with "+str(TRIALS)+" trials.png")
-
 
 
 def experiment_degree(degree_list):
@@ -274,8 +274,12 @@ def experiment_degree(degree_list):
 
     plt.savefig("Degree experiment with "+str(TRIALS)+" trials.png")
 
-#experiment_size(TRAINING_SIZE)
 
-#experiment_sigma(SIGMA_LIST)
+# experiment_all(TRAINING_SIZE, SIGMA_LIST, DEGREE_LIST)
+#
+# experiment_size(TRAINING_SIZE)
+#
+# experiment_sigma(SIGMA_LIST)
+#
+# experiment_degree(DEGREE_LIST)
 
-experiment_degree(DEGREE_LIST)
