@@ -126,6 +126,21 @@ def plotmse(times, errors):
 
 # training data size
 
+def experiment_all(N, Sigma_list, degree_list):
+    for n in N:
+        for sigma in Sigma_list:
+            for degree in degree_list:
+
+                theta = torch.zeros(degree + 1, 1)
+                experiment_all_reg = experiment(sigma, 2000, theta, degree, LEARNING_RATE, n, TEST_SIZE, TRIALS, True,
+                                              False)
+                np.save(experiment_all_reg)
+                experiment_all_test = experiment(sigma, 2000, theta, degree, LEARNING_RATE, n, TEST_SIZE, TRIALS, False,
+                                          False)
+                np.save(experiment_all_test)
+
+
+
 
 def experiment_size(N):
     errors_in = np.array([])
