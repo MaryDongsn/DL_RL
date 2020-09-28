@@ -5,12 +5,22 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+SIGMA_LIST = [0.01, 0.1,1]
+TRAINING_SIZE = [2,5,10,20,50,100,200]
+DEGREE_LIST = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
+
+# Values
+TRIALS = 50
+LEARNING_RATE = 0.25
+TEST_SIZE = 1000
+
+
+# Values used for plotting purposes
 POLY_DEGREE = 10
 THETA = torch.zeros(POLY_DEGREE+1,1)
-TEST_SIZE = 1000
-SIGMA = 1
-TRAINING_SIZE = [2,5,10,20,50,100,200]
-TRIALS = 50
+SIGMA = 0.01
+
 
 def getData(data_size,sigma):
     x = torch.empty(data_size, ).uniform_(0, 1).type(torch.FloatTensor)
@@ -126,8 +136,8 @@ def experiment_size(N):
     errors_bias_reg = np.array([])
     for n in N:
         print("n: ", n)
-        experiment_N_reg = experiment(0.01, 200, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, TRIALS, True, False)
-        experiment_N = experiment(0.01, 200, THETA, POLY_DEGREE, 0.25, n, TEST_SIZE, TRIALS, False, False)
+        experiment_N_reg = experiment(SIGMA, 10000, THETA, POLY_DEGREE, LEARNING_RATE, n, TEST_SIZE, TRIALS, True, False)
+        experiment_N = experiment(SIGMA, 10000, THETA, POLY_DEGREE, LEARNING_RATE, n, TEST_SIZE, TRIALS, False, False)
 
         Ein_N_reg = experiment_N_reg[0]
         Eout_N_reg = experiment_N_reg[1]
@@ -156,9 +166,101 @@ def experiment_size(N):
 
     plt.xlabel('training sample size')
     plt.ylabel('MSE')
-    plt.title('d = 10, sigma = 1')
+    plt.title('d = 10, sigma = 0.01')
 
-    plt.savefig("Sample size with "+str(TRIALS)+" trials")
+    plt.savefig("Sample size 0.01 sigma experiment with "+str(TRIALS)+" trials.png")
+
+def experiment_sigma(Sigma_list):
+    errors_in = np.array([])
+    errors_out = np.array([])
+    errors_bias = np.array([])
+    errors_in_reg = np.array([])
+    errors_out_reg = np.array([])
+    errors_bias_reg = np.array([])
+    for sigma in Sigma_list:
+        print("theta: ", sigma)
+        experiment_N_reg = experiment(sigma, 2000, THETA, POLY_DEGREE, LEARNING_RATE, 200, TEST_SIZE, TRIALS, True, False)
+        experiment_N = experiment(sigma, 2000, THETA, POLY_DEGREE, LEARNING_RATE, 200, TEST_SIZE, TRIALS, False, False)
+
+        Ein_reg = experiment_N_reg[0]
+        Eout_reg = experiment_N_reg[1]
+        Ebias_reg = experiment_N_reg[2]
+
+        Ein = experiment_N[0]
+        Eout = experiment_N[1]
+        Ebias= experiment_N[2]
+
+        errors_in_reg = np.append(errors_in_reg, Ein_reg)
+        errors_out_reg = np.append(errors_out_reg, Eout_reg)
+        errors_bias_reg= np.append(errors_bias_reg, Ebias_reg)
+
+        errors_in = np.append(errors_in, Ein)
+        errors_out = np.append(errors_out, Eout)
+        errors_bias = np.append(errors_bias, Ebias)
+
+    fig, ax = plt.subplots()
+    sns.lineplot(x=Sigma_list, y=errors_in_reg, color='blue', label='E_in with regularization', ax=ax)
+    sns.lineplot(x=Sigma_list, y=errors_out_reg, color='red', label='E_out with regularization', ax=ax)
+    sns.lineplot(x=Sigma_list, y=errors_bias_reg, color='green', label='E_bias with regularization', ax=ax)
+
+    sns.lineplot(x=Sigma_list, y=errors_in, color='blue', label='E_in', ax=ax, linestyle='dashed')
+    sns.lineplot(x=Sigma_list, y=errors_out, color='red', label='E_out', ax=ax, linestyle='dashed')
+    sns.lineplot(x=Sigma_list, y=errors_bias, color='green', label='E_bias', ax=ax, linestyle='dashed')
+
+    plt.xlabel('training sample size')
+    plt.ylabel('MSE')
+    plt.title('d = 10, N = 200')
+
+    plt.savefig("Sigma experiment with "+str(TRIALS)+" trials.png")
 
 
-experiment_size(TRAINING_SIZE)
+
+def experiment_degree(degree_list):
+    errors_in = np.array([])
+    errors_out = np.array([])
+    errors_bias = np.array([])
+    errors_in_reg = np.array([])
+    errors_out_reg = np.array([])
+    errors_bias_reg = np.array([])
+    for degree in degree_list:
+        print("poly_degree: ", degree)
+        theta = torch.zeros(degree+1,1)
+        experiment_N_reg = experiment(SIGMA, 2000, theta, degree, LEARNING_RATE, 100, TEST_SIZE, TRIALS, True, False)
+        experiment_N = experiment(SIGMA, 2000, theta, degree, LEARNING_RATE, 100, TEST_SIZE, TRIALS, False, False)
+
+        Ein_reg = experiment_N_reg[0]
+        Eout_reg = experiment_N_reg[1]
+        Ebias_reg = experiment_N_reg[2]
+
+        Ein = experiment_N[0]
+        Eout = experiment_N[1]
+        Ebias= experiment_N[2]
+
+        errors_in_reg = np.append(errors_in_reg, Ein_reg)
+        errors_out_reg = np.append(errors_out_reg, Eout_reg)
+        errors_bias_reg= np.append(errors_bias_reg, Ebias_reg)
+
+        errors_in = np.append(errors_in, Ein)
+        errors_out = np.append(errors_out, Eout)
+        errors_bias = np.append(errors_bias, Ebias)
+
+    fig, ax = plt.subplots()
+    sns.lineplot(x=degree_list, y=errors_in_reg, color='blue', label='E_in with regularization', ax=ax)
+    sns.lineplot(x=degree_list, y=errors_out_reg, color='red', label='E_out with regularization', ax=ax)
+    sns.lineplot(x=degree_list, y=errors_bias_reg, color='green', label='E_bias with regularization', ax=ax)
+
+    sns.lineplot(x=degree_list, y=errors_in, color='blue', label='E_in', ax=ax, linestyle='dashed')
+    sns.lineplot(x=degree_list, y=errors_out, color='red', label='E_out', ax=ax, linestyle='dashed')
+    sns.lineplot(x=degree_list, y=errors_bias, color='green', label='E_bias', ax=ax, linestyle='dashed')
+
+    plt.xlabel('polynomial degree')
+    plt.ylabel('MSE')
+    plt.title('theta = 0.01, N = 100')
+
+    plt.savefig("Degree experiment with "+str(TRIALS)+" trials.png")
+
+#experiment_size(TRAINING_SIZE)
+
+#experiment_sigma(SIGMA_LIST)
+
+experiment_degree(DEGREE_LIST)
